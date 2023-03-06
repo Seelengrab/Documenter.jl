@@ -412,7 +412,7 @@ function latex(io::Context, ::Node, d::Dict{MIME,Any})
     if haskey(d, MIME"image/png"())
         write("$(filename).png", base64decode(d[MIME"image/png"()]))
         _println(io, """
-        \\begin{figure}[H]
+        \\begin{figure}[hb]
         \\centering
         \\includegraphics[max width=\\linewidth]{$(filename)}
         \\end{figure}
@@ -420,7 +420,7 @@ function latex(io::Context, ::Node, d::Dict{MIME,Any})
     elseif haskey(d, MIME"image/jpeg"())
         write("$(filename).jpeg", base64decode(d[MIME"image/jpeg"()]))
         _println(io, """
-        \\begin{figure}[H]
+        \\begin{figure}[hb]
         \\centering
         \\includegraphics[max width=\\linewidth]{$(filename)}
         \\end{figure}
@@ -695,7 +695,7 @@ end
 
 function latex(io::Context, node::Node, image::MarkdownAST.Image)
     # TODO: also print the .title field somehow
-    wrapblock(io, "figure") do
+    wrapblock(io, "figure", "H") do
         _println(io, "\\centering")
         @warn "images with absolute URLs not supported in LaTeX output in $(Documenter.locrepr(io.filename))" url = image.destination
         # We nevertheless output an \includegraphics with the URL. The LaTeX build will
@@ -824,8 +824,9 @@ end
 
 latexesc(s) = sprint(latexesc, s)
 
-function wrapblock(f, io, env)
-    _println(io, "\\begin{", env, "}")
+function wrapblock(f, io, env, opts=nothing)
+    opt = isnothing(opts) ? "" : "["*opts*"]"
+    _println(io, "\\begin{", env, "}", opt)
     f()
     _println(io, "\\end{", env, "}")
 end

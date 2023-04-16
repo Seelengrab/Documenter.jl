@@ -2453,7 +2453,14 @@ end
 # If the nodes passed through CrossReferences as native MarkdownAST elements, then that
 # means they're reasonable absolute URLs. Or, possibly, the URL is problematic, but we
 # just ignore that here. That should have been caught earlier.
-filehref(dctx::DCtx, node::Node, e::Union{MarkdownAST.Image, MarkdownAST.Link}) = e.destination
+function filehref(dctx::DCtx, node::Node, e::Union{MarkdownAST.Image, MarkdownAST.Link})
+    # just a reference target
+    if startswith(e.destination, "@id ") 
+        e.destination[5:end]
+    else
+        e.destination
+    end
+end
 
 function filehref(dctx::DCtx, node::Node, e::Documenter.PageLink)
     ctx, navnode = dctx.ctx, dctx.navnode

@@ -48,6 +48,8 @@ function local_links!(node::MarkdownAST.Node, meta, page, doc)
     Documenter.isabsurl(link_url) && return
     # Similarly, mailto: links get passed on
     startswith(link_url, "mailto:") && return
+    # @id links get passed on too
+    startswith(link_url, "@id ") && return
 
     # Anything else, however, is assumed to be a local URL, and we check that it is
     # actually pointing to a file.

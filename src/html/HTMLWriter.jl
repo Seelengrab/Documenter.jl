@@ -1964,7 +1964,15 @@ function domify(dctx::DCtx, node::Node, link::MarkdownAST.Link)
     url = fixlink(dctx, link)
     # function mdconvert(link::Markdown.Link, parent; droplinks=false, kwargs...)
     link_text = domify(dctx, node.children)
-    droplinks ? link_text : Tag(:a)[:href => url](link_text)
+    if droplinks
+        link_text
+    else
+        if startswith(link.destination, "@id ")
+            Tag(:span)[:id => url](link_text)
+        else
+            Tag(:a)[:href => url](link_text)
+        end
+    end
 end
 
 function domify(dctx::DCtx, node::Node, list::MarkdownAST.List)
@@ -2176,6 +2184,8 @@ function fixlink(dctx::DCtx, link::MarkdownAST.Link)
     # links starting with a # are references within the same file -- there's nothing to fix
     # for such links
     startswith(link_url, '#') && return link_url
+    # just a  reference target, will be fixed in domify
+    startswith(link_url, "@id ") && return link_url[5:end]
 
     s = split(link_url, "#", limit = 2)
     if Sys.iswindows() && ':' in first(s)

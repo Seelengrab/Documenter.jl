@@ -210,6 +210,10 @@ struct LocalImage <: MarkdownAST.AbstractInline
     path::String
 end
 
+struct IdLink <: MarkdownAST.AbstractInline
+    target::String
+end
+
 # Navigation
 # ----------------------
 

@@ -760,6 +760,13 @@ function latex(io::Context, node::Node, link::Documenter.LocalLink)
     _print(io, "}")
 end
 
+function latex(io::Context, node::Node, link::Documenter.IdLink)
+    id = _hash(link.target)
+    _print(io, "\n\\label{", id, "}{")
+    latex(io, node.children)
+    _print(io, "}\n")
+end
+
 function latex(io::Context, node::Node, link::MarkdownAST.Link)
     # If we're in a header, we don't want to print any \hyperlinkref commands,
     # so we handle this here.

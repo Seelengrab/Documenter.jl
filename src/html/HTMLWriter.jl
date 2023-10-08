@@ -2169,6 +2169,12 @@ function domify(dctx::DCtx, node::Node, link::LinkElements)
     droplinks ? link_text : Tag(:a)[:href => url](link_text)
 end
 
+function domify(dctx::DCtx, node::Node, link::Documenter.IdLink)
+    droplinks = dctx.droplinks
+    link_text = domify(dctx, node.children)
+    droplinks ? link_text : Tag(:span)[:id => link.target](link_text)
+end
+
 function domify(dctx::DCtx, node::Node, list::MarkdownAST.List)
     isordered = (list.type === :ordered)
     (isordered ? Tag(:ol) : Tag(:ul))(map(Tag(:li), domify(dctx, node.children)))
@@ -2453,14 +2459,7 @@ end
 # If the nodes passed through CrossReferences as native MarkdownAST elements, then that
 # means they're reasonable absolute URLs. Or, possibly, the URL is problematic, but we
 # just ignore that here. That should have been caught earlier.
-function filehref(dctx::DCtx, node::Node, e::Union{MarkdownAST.Image, MarkdownAST.Link})
-    # just a reference target
-    if startswith(e.destination, "@id ") 
-        e.destination[5:end]
-    else
-        e.destination
-    end
-end
+filehref(dctx::DCtx, node::Node, e::Union{MarkdownAST.Image, MarkdownAST.Link}) = e.destination
 
 function filehref(dctx::DCtx, node::Node, e::Documenter.PageLink)
     ctx, navnode = dctx.ctx, dctx.navnode

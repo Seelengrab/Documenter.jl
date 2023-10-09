@@ -425,6 +425,14 @@ function latex(io::Context, ::Node, d::Dict{MIME,Any})
         \\includegraphics[max width=\\linewidth]{$(filename)}
         \\end{figure}
         """)
+    elseif haskey(d, MIME"image/svg+xml"())
+        write("$(filename).jpeg", base64decode(d[MIME"image/svg+xml"()]))
+        _println(io, """
+        \\begin{figure}[hb]
+        \\centering
+        \\includesvg[max width=\\linewidth]{$(filename)}
+        \\end{figure}
+        """)
     elseif haskey(d, MIME"text/latex"())
         # If it has a latex MIME, just write it out directly.
         content = d[MIME("text/latex")]
@@ -697,11 +705,24 @@ function latex(io::Context, node::Node, image::MarkdownAST.Image)
     # TODO: also print the .title field somehow
     wrapblock(io, "figure", "H") do
         _println(io, "\\centering")
-        @warn "images with absolute URLs not supported in LaTeX output in $(Documenter.locrepr(io.filename))" url = image.destination
-        # We nevertheless output an \includegraphics with the URL. The LaTeX build will
-        # then give an error, indicating to the user that something wrong.
-        url = replace(image.destination, "\\" => "/") # use / on Windows too.
-        wrapinline(io, "includegraphics[max width=\\linewidth]") do
+        url = if Documenter.isabsurl(image.destination)
+            @warn "images with absolute URLs not supported in LaTeX output in $(Documenter.locrepr(io.filename))" url = image.destination
+            # We nevertheless output an \includegraphics with the URL. The LaTeX build will
+            # then give an error, indicating to the user that something wrong.
+            image.destination
+        elseif startswith(image.destination, '/')
+            # URLs starting with a / are assumed to be relative to the document's root
+            normpath(lstrip(image.destination, '/'))
+        else
+            normpath(joinpath(dirname(io.filename), image.destination))
+        end
+        url = replace(url, "\\" => "/") # use / on Windows too.
+        wrapper = if endswith(url, "svg")
+            "includesvg[width=\\linewidth]"
+        else
+            "includegraphics[max width=\\linewidth]"
+        end
+        wrapinline(io, wrapper) do
             _print(io, url)
         end
         _println(io)
